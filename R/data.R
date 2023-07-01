@@ -12,7 +12,7 @@
 #'   ...
 #' }
 #' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
-"northcarolina_sf"
+"northcarolina_county_sf"
 
 #' World Health Organization TB data
 #'
@@ -28,7 +28,7 @@
 #'   ...
 #' }
 #' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
-"northcarolina_flat"
+"northcarolina_county_flat"
 
 
 #' World Health Organization TB data

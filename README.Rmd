@@ -43,13 +43,16 @@ What is special about using `README.Rmd` instead of just `README.md`? You can in
 ```{r cars}
 library(ggplot2)
 ggplot() +
-  stamp_sf_countynorthcarolina(data = cars)
+  stamp_sf_countynorthcarolina()
 
 library(ggplot2)
 northcarolina_flat %>%
 ggplot() +
 aes(fips = FIPS) +
 geom_sf_countynorthcarolina()
+
+last_plot() + 
+  aes(fill = BIR74)
 
 
 northcarolina_flat %>%

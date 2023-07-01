@@ -34,7 +34,7 @@ You can include R chunks like so:
 ``` r
 library(ggplot2)
 ggplot() +
-  stamp_sf_countynorthcarolina(data = cars)
+  stamp_sf_countynorthcarolina()
 ```
 
 <img src="man/figures/README-cars-1.png" width="100%" />
@@ -53,6 +53,15 @@ geom_sf_countynorthcarolina()
 
 ``` r
 
+last_plot() + 
+  aes(fill = BIR74)
+#> Joining with `by = join_by(fips)`
+```
+
+<img src="man/figures/README-cars-3.png" width="100%" />
+
+``` r
+
 
 northcarolina_flat %>%
 ggplot() +
@@ -66,4 +75,4 @@ color = "oldlace")
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-cars-3.png" width="100%" />
+<img src="man/figures/README-cars-4.png" width="100%" />
