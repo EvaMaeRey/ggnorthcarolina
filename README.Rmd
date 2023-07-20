@@ -13,12 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# ggnorthcarolina
-
-<!-- badges: start -->
-<!-- badges: end -->
-
-The goal of ggnorthcarolina is to ...
+# 0. ggnorthcarolina
 
 ## Installation
 
@@ -35,33 +30,95 @@ This is a basic example which shows you how to solve a common problem:
 
 ```{r example}
 library(ggnorthcarolina)
-## basic example code
-```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-library(ggplot2)
-ggplot() +
-  stamp_sf_countynorthcarolina()
+northcarolina_flat %>% head()
 
 library(ggplot2)
 northcarolina_flat %>%
 ggplot() +
-aes(fips = FIPS) +
-geom_sf_countynorthcarolina()
+  aes(fips = FIPS) +
+  geom_sf_countynorthcarolina() ->
+A
 
 last_plot() + 
-  aes(fill = BIR74)
+  aes(fill = BIR74) ->
+B
 
+library(patchwork)
+A + B
 
 northcarolina_flat %>%
 ggplot() +
-aes(fips = FIPS, fill = SID74,
+aes(fips = FIPS, 
+    fill = SID74,
     label = paste0(NAME, "\n", SID74)) +
-geom_sf_countynorthcarolina() +
-geom_label_northcarolina_county(lineheight = .7,
-size = 2, check_overlap= TRUE,
-color = "oldlace")
+  geom_sf_countynorthcarolina() +
+  geom_label_northcarolina_county(
+    lineheight = .7,
+    size = 2, 
+    check_overlap= TRUE,
+    color = "oldlace")
 ```
 
+
+
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+# 1. The second-order goal of ggnorthcarolina is to serve as a model and template for other ggplot-based geography-specific convenience mapping packages. 
+
+Let's look at the package contents
+
+```{r}
+fs::dir_tree(recurse = F)
+```
+
+The data-raw and R folder are where all the creative action happens.
+
+```{r}
+fs::dir_tree(path = "data-raw", recurse = F)
+fs::dir_tree(path = "R", recurse = F)
+```
+
+# A. Prepare reference datasets
+
+The functions that you create in the R folder will use data that is prepared in the ./data-raw/DATASET.R file.  Let's have a look at the contents of that file to get a sense of the preparation.
+
+## ./data-raw/DATASET.R
+
+```{r, code = readLines("./data-raw/DATASET.R"), eval=FALSE}
+
+
+```
+
+The prepared data is documented in ./R/data.R
+
+
+## ./R/data.R
+
+```{r, code = readLines("./R/data.R"), eval=FALSE}
+
+
+```
+
+# B. Prepare functions for building polygons defined by ids
+
+## ./R/geom.R
+
+```{r, code = readLines("./R/geom.R"), eval=FALSE}
+
+```
+
+## ./R/stamp.R
+
+```{r, code = readLines("./R/stamp.R"), eval=FALSE}
+
+```
+
+
+## ./R/labels.R
+
+```{r, code = readLines("./R/labels.R"), eval=FALSE}
+
+```
