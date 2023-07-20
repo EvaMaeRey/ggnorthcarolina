@@ -44,7 +44,7 @@ library(ggplot2)
 northcarolina_flat %>%
 ggplot() +
   aes(fips = FIPS) +
-  geom_sf_countynorthcarolina() ->
+  geom_county() ->
 A
 
 last_plot() + 
@@ -65,8 +65,8 @@ ggplot() +
 aes(fips = FIPS, 
     fill = SID74,
     label = paste0(NAME, "\n", SID74)) +
-  geom_sf_countynorthcarolina() +
-  geom_label_northcarolina_county(
+  geom_county() +
+  geom_county_label(
     lineheight = .7,
     size = 2, 
     check_overlap= TRUE,

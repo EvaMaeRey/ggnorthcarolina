@@ -64,8 +64,8 @@ StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcaro
 #' @examples
 #' library(ggplot2)
 #' ggplot() +
-#' stamp_sf_countynorthcarolina()
-stamp_sf_countynorthcarolina <- function(
+#' stamp_county()
+stamp_county <- function(
                                  mapping = NULL,
                                  data = reference_full,
                                  position = "identity",

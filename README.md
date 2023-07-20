@@ -61,7 +61,7 @@ library(ggplot2)
 northcarolina_flat %>%
 ggplot() +
   aes(fips = FIPS) +
-  geom_sf_countynorthcarolina() ->
+  geom_county() ->
 A
 
 last_plot() + 
@@ -87,8 +87,8 @@ ggplot() +
 aes(fips = FIPS, 
     fill = SID74,
     label = paste0(NAME, "\n", SID74)) +
-  geom_sf_countynorthcarolina() +
-  geom_label_northcarolina_county(
+  geom_county() +
+  geom_county_label(
     lineheight = .7,
     size = 2, 
     check_overlap= TRUE,
@@ -361,18 +361,20 @@ compute_county_northcarolina <- function(data, scales, keep_county = NULL){
       reference_filtered
 
   }
-
-  # to prevent overjoining
-  reference_filtered %>%
-    dplyr::select("fips", "geometry", "xmin",
-                  "xmax", "ymin", "ymax") ->
-    reference_filtered
+#
+#   # to prevent overjoining
+#   reference_filtered %>%
+#     dplyr::select("fips",  # id columns
+#                   "geometry",
+#                   "xmin","xmax",
+#                   "ymin", "ymax") ->
+#     reference_filtered
 
 
   data %>%
-    dplyr::inner_join(reference_filtered) %>% # , by = join_by(fips)
-    dplyr::mutate(group = -1) %>%
-    dplyr::select(-fips) #%>%
+    dplyr::inner_join(reference_filtered) #%>% # , by = join_by(fips)
+    # dplyr::mutate(group = -1) %>%
+    # dplyr::select(-fips) #%>%
     # sf::st_as_sf() %>%
     # sf::st_transform(crs = 5070)
 
@@ -409,8 +411,8 @@ StatCountynorthcarolina <- ggplot2::ggproto(`_class` = "StatCountynorthcarolina"
 #' northcarolina_flat %>%
 #' ggplot() +
 #' aes(fips = FIPS) +
-#' geom_sf_countynorthcarolina()
-geom_sf_countynorthcarolina <- function(
+#' geom_county()
+geom_county <- function(
                                  mapping = NULL,
                                  data = NULL,
                                  position = "identity",
@@ -508,8 +510,8 @@ StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcaro
 #' @examples
 #' library(ggplot2)
 #' ggplot() +
-#' stamp_sf_countynorthcarolina()
-stamp_sf_countynorthcarolina <- function(
+#' stamp_county()
+stamp_county <- function(
                                  mapping = NULL,
                                  data = reference_full,
                                  position = "identity",
@@ -634,29 +636,29 @@ StatCountycenters <- ggplot2::ggproto(
 #' northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = NAME) +
-#'  geom_label_northcarolina_county()
+#'  geom_county_label()
 #'
 #' northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = NAME) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county()
+#'  geom_county() +
+#'  geom_county_label()
 #'
 #'  northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = SID74, fill = SID74) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county(color = "oldlace")
+#'  geom_county() +
+#'  geom_county_label(color = "oldlace")
 #'
 #'  northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, fill = SID74,
 #'      label = paste0(NAME, "\n", SID74)) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county(lineheight = .7,
+#'  geom_county() +
+#'  geom_county_label(lineheight = .7,
 #'  size = 2, check_overlap= TRUE,
 #'  color = "oldlace")
-geom_label_northcarolina_county <- function(
+geom_county_label <- function(
   mapping = NULL,
   data = NULL,
   position = "identity",

@@ -28,18 +28,20 @@ compute_county_northcarolina <- function(data, scales, keep_county = NULL){
       reference_filtered
 
   }
-
-  # to prevent overjoining
-  reference_filtered %>%
-    dplyr::select("fips", "geometry", "xmin",
-                  "xmax", "ymin", "ymax") ->
-    reference_filtered
+#
+#   # to prevent overjoining
+#   reference_filtered %>%
+#     dplyr::select("fips",  # id columns
+#                   "geometry",
+#                   "xmin","xmax",
+#                   "ymin", "ymax") ->
+#     reference_filtered
 
 
   data %>%
-    dplyr::inner_join(reference_filtered) %>% # , by = join_by(fips)
-    dplyr::mutate(group = -1) %>%
-    dplyr::select(-fips) #%>%
+    dplyr::inner_join(reference_filtered) #%>% # , by = join_by(fips)
+    # dplyr::mutate(group = -1) %>%
+    # dplyr::select(-fips) #%>%
     # sf::st_as_sf() %>%
     # sf::st_transform(crs = 5070)
 
@@ -76,8 +78,8 @@ StatCountynorthcarolina <- ggplot2::ggproto(`_class` = "StatCountynorthcarolina"
 #' northcarolina_flat %>%
 #' ggplot() +
 #' aes(fips = FIPS) +
-#' geom_sf_countynorthcarolina()
-geom_sf_countynorthcarolina <- function(
+#' geom_county()
+geom_county <- function(
                                  mapping = NULL,
                                  data = NULL,
                                  position = "identity",

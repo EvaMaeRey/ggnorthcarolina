@@ -67,29 +67,29 @@ StatCountycenters <- ggplot2::ggproto(
 #' northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = NAME) +
-#'  geom_label_northcarolina_county()
+#'  geom_county_label()
 #'
 #' northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = NAME) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county()
+#'  geom_county() +
+#'  geom_county_label()
 #'
 #'  northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, label = SID74, fill = SID74) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county(color = "oldlace")
+#'  geom_county() +
+#'  geom_county_label(color = "oldlace")
 #'
 #'  northcarolina_flat %>%
 #'  ggplot() +
 #'  aes(fips = FIPS, fill = SID74,
 #'      label = paste0(NAME, "\n", SID74)) +
-#'  geom_sf_countynorthcarolina() +
-#'  geom_label_northcarolina_county(lineheight = .7,
+#'  geom_county() +
+#'  geom_county_label(lineheight = .7,
 #'  size = 2, check_overlap= TRUE,
 #'  color = "oldlace")
-geom_label_northcarolina_county <- function(
+geom_county_label <- function(
   mapping = NULL,
   data = NULL,
   position = "identity",
