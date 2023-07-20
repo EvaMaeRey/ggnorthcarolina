@@ -147,9 +147,9 @@ fs::dir_tree(path = "data-raw", recurse = F)
 fs::dir_tree(path = "R", recurse = F)
 #> R
 #> ├── data.R
-#> ├── geom.R
-#> ├── labels.R
-#> ├── stamp.R
+#> ├── geom_county.R
+#> ├── geom_county_labels.R
+#> ├── stamp_county.R
 #> └── utils-pipe.R
 ```
 
@@ -212,7 +212,50 @@ northcarolina_county_centers <- northcarolina_county_sf |>
 usethis::use_data(northcarolina_county_centers, overwrite = TRUE)
 ```
 
-## \#\# B.ii dataset documentation ./R/data.R
+Here are a few rows of each dataset that’s created
+
+``` r
+nc_flat %>% head()
+#>    AREA PERIMETER CNTY_ CNTY_ID        NAME  FIPS FIPSNO CRESS_ID BIR74 SID74
+#> 1 0.114     1.442  1825    1825        Ashe 37009  37009        5  1091     1
+#> 2 0.061     1.231  1827    1827   Alleghany 37005  37005        3   487     0
+#> 3 0.143     1.630  1828    1828       Surry 37171  37171       86  3188     5
+#> 4 0.070     2.968  1831    1831   Currituck 37053  37053       27   508     1
+#> 5 0.153     2.206  1832    1832 Northampton 37131  37131       66  1421     9
+#> 6 0.097     1.670  1833    1833    Hertford 37091  37091       46  1452     7
+#>   NWBIR74 BIR79 SID79 NWBIR79
+#> 1      10  1364     0      19
+#> 2      10   542     3      12
+#> 3     208  3616     6     260
+#> 4     123   830     2     145
+#> 5    1066  1606     3    1197
+#> 6     954  1838     5    1237
+northcarolina_county_reference %>% head()
+#>   county_name  fips      xmin     ymin      xmax     ymax
+#> 1        Ashe 37009 -81.74107 36.23436 -81.23989 36.58965
+#> 2   Alleghany 37005 -81.34754 36.36536 -80.90344 36.57286
+#> 3       Surry 37171 -80.96577 36.23388 -80.43531 36.56521
+#> 4   Currituck 37053 -76.33025 36.07282 -75.77316 36.55716
+#> 5 Northampton 37131 -77.90121 36.16277 -77.07531 36.55629
+#> 6    Hertford 37091 -77.21767 36.23024 -76.70750 36.55629
+#>                         geometry
+#> 1 MULTIPOLYGON (((-81.47276 3...
+#> 2 MULTIPOLYGON (((-81.23989 3...
+#> 3 MULTIPOLYGON (((-80.45634 3...
+#> 4 MULTIPOLYGON (((-76.00897 3...
+#> 5 MULTIPOLYGON (((-77.21767 3...
+#> 6 MULTIPOLYGON (((-76.74506 3...
+nc_county_centers %>% head()
+#>           x        y county_name  fips
+#> 1 -81.49496 36.42112        Ashe 37009
+#> 2 -81.13241 36.47396   Alleghany 37005
+#> 3 -80.69280 36.38828       Surry 37171
+#> 4 -75.93852 36.30697   Currituck 37053
+#> 5 -77.36988 36.35211 Northampton 37131
+#> 6 -77.04217 36.39709    Hertford 37091
+```
+
+## B.ii dataset documentation ./R/data.R
 
 Now you’ll also want to document that data in ./R/data.R as shown
 
@@ -495,6 +538,30 @@ stamp_sf_countynorthcarolina <- function(
 }
 ```
 
+### Changing context
+
+Here is a suggested preparation for a package for allowing for
+ggbrasilstates easy creation of brazilian state choropleth, reading in
+an sf states object from the geombr package.
+
+    brasil_state_sf <- geobr::read_state() %>%
+      rename(state_code = code_state,
+             state_abb = abbrev_state,
+             state = name_state,
+             region_code = code_region,
+             region = name_region,
+             geometry = geom)# year 2010
+
+Then a number of changes would need to be made to update the DATASET.R
+file, including object names. Also notably there are quite a few columns
+that are ID columns compared to the North Carolina case.
+
+Find and change can be used for object name changes.
+
+    id_cols = c(county_name, fips) -> id_cols = c(state_code, state_abb, state, region_code, region)
+    county -> state
+    northcarolina -> brasil
+
 ## ./R/labels.R
 
 ``` r
@@ -608,3 +675,9 @@ geom_label_northcarolina_county <- function(
   )
 }
 ```
+
+For ggbrasil in these files changes should be made:
+
+    County -> State
+
+New examples should be crafted.
