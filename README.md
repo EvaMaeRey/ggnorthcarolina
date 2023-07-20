@@ -15,11 +15,27 @@ devtools::install_github("EvaMaeRey/ggnorthcarolina")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+This is a basic example which shows you how to solve a common problem of
+working with North Carolina county characteristics data, and wanting to
+map that data, but not having boundary files on hand or not wanting to
+think about their preparation.
+
+Here’s some info about NC counties in a data frame; it has no boundary
+info.
 
 ``` r
+library(tidyverse)
+#> ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+#> ✔ dplyr     1.1.0     ✔ readr     2.1.4
+#> ✔ forcats   1.0.0     ✔ stringr   1.5.0
+#> ✔ ggplot2   3.4.1     ✔ tibble    3.2.0
+#> ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+#> ✔ purrr     1.0.1     
+#> ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+#> ✖ dplyr::filter() masks stats::filter()
+#> ✖ dplyr::lag()    masks stats::lag()
+#> ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 library(ggnorthcarolina)
-
 northcarolina_flat %>% head()
 #>    AREA PERIMETER CNTY_ CNTY_ID        NAME  FIPS FIPSNO CRESS_ID BIR74 SID74
 #> 1 0.114     1.442  1825    1825        Ashe 37009  37009        5  1091     1
@@ -35,7 +51,12 @@ northcarolina_flat %>% head()
 #> 4     123   830     2     145
 #> 5    1066  1606     3    1197
 #> 6     954  1838     5    1237
+```
 
+With ggnorthcarolina, voila, choropleth\!
+
+``` r
+library(ggnorthcarolina)
 library(ggplot2)
 northcarolina_flat %>%
 ggplot() +
@@ -53,10 +74,14 @@ A + B
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-example-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+
+By declaring the aesthetic fips, the geom\_ function joins the flat file
+to boundary data and an SF layer is plotted.
+
+We also make labeling these polygons easy:
 
 ``` r
-
 northcarolina_flat %>%
 ggplot() +
 aes(fips = FIPS, 
@@ -72,15 +97,29 @@ aes(fips = FIPS,
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-example-2.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-# 1\. The second-order goal of ggnorthcarolina is to serve as a model and template for other ggplot-based geography-specific convenience mapping packages.
+# 1\. Using ggnorthcarolina as a package-building reference
 
-Let’s look at the package contents
+The second-order goal of ggnorthcarolina is to serve as a model and
+template for other ggplot-based geography-specific convenience mapping
+packages.
+
+## A. Shape file pre-step
+
+A prerequisite to embarking on the following journey is that you have
+geographic data that you’d like to connect up to a flat file for mapping
+with ggplot2. In our case, for convenience, we use nc.shp provided in
+the sf package. You’ll see that file read in as an sf object later with
+the following code:
+
+    st_read(system.file("shape/nc.shp", package="sf")) 
+
+Now, let’s look at the package contents.
 
 ``` r
 fs::dir_tree(recurse = F)
@@ -96,7 +135,10 @@ fs::dir_tree(recurse = F)
 #> └── man
 ```
 
-The data-raw and R folder are where all the creative action happens.
+If you’ve done any package building before the components will be
+familiar. However, to replicate the functionality for other geographic
+regions (i.e. changing out North Carolina), we’ll need to examine the
+data-raw and R folders are where all the creative action happens.
 
 ``` r
 fs::dir_tree(path = "data-raw", recurse = F)
@@ -111,13 +153,22 @@ fs::dir_tree(path = "R", recurse = F)
 #> └── utils-pipe.R
 ```
 
-# A. Prepare reference datasets
+# B Prepare reference datasets.
 
 The functions that you create in the R folder will use data that is
 prepared in the ./data-raw/DATASET.R file. Let’s have a look at the
-contents of that file to get a sense of the preparation.
+contents of that file to get a sense of the preparation. Functions in
+the {ggnc} package will help you prepare the reference data that is
+required. Keep an eye out for `ggnc::create_geometries_reference()` and
+`ggnc::prepare_polygon_labeling_data()`.
 
-## ./data-raw/DATASET.R
+ggnc is available on git hub as shown:
+
+``` r
+remotes::install_github("EvaMaeRey/ggnc")
+```
+
+## B.i dataset build ./data-raw/DATASET.R
 
 ``` r
 ## code to prepare `DATASET` dataset goes here
@@ -161,9 +212,9 @@ northcarolina_county_centers <- northcarolina_county_sf |>
 usethis::use_data(northcarolina_county_centers, overwrite = TRUE)
 ```
 
-The prepared data is documented in ./R/data.R
+## \#\# B.ii dataset documentation ./R/data.R
 
-## ./R/data.R
+Now you’ll also want to document that data in ./R/data.R as shown
 
 ``` r
 #' World Health Organization TB data
