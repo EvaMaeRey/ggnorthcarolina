@@ -1,8 +1,7 @@
-# step 00 reference data
-# northcarolina_county_centers <- data.frame(     x   =  -81.49496,   y = 36.42112,  county_name = "Ashe",   fips = "37009")
 
 
-# step 1
+################# Step 1. Compute panel function ###########
+
 #' Title
 #'
 #' @param data
@@ -13,10 +12,6 @@
 #' @export
 #'
 #' @examples
-#' northcarolina_flat |>
-#'   dplyr::rename(fips = FIPS) |>
-#'   dplyr::rename(label = NAME) |>
-#'   compute_panel_county_centers()
 compute_panel_county_centers <- function(data,
                                          scales,
                                          keep_county = NULL){
@@ -38,16 +33,16 @@ compute_panel_county_centers <- function(data,
 
 }
 
-
-
-
-# step 2 proto
+###### Step 2. Specify ggproto ###############
 StatCountycenters <- ggplot2::ggproto(
   `_class` = "StatRownumber",
   `_inherit` = ggplot2::Stat,
   # required_aes = c("label"), # for some reason this breaks things... why?
   compute_panel = compute_panel_county_centers
 )
+
+
+########### Step 3. 'stamp' function, inherits from sf ##################
 
 #' Title
 #'
@@ -63,32 +58,6 @@ StatCountycenters <- ggplot2::ggproto(
 #' @export
 #'
 #' @examples
-#' library(ggplot2)
-#' northcarolina_flat %>%
-#'  ggplot() +
-#'  aes(fips = FIPS, label = NAME) +
-#'  geom_county_label()
-#'
-#' northcarolina_flat %>%
-#'  ggplot() +
-#'  aes(fips = FIPS, label = NAME) +
-#'  geom_county() +
-#'  geom_county_label()
-#'
-#'  northcarolina_flat %>%
-#'  ggplot() +
-#'  aes(fips = FIPS, label = SID74, fill = SID74) +
-#'  geom_county() +
-#'  geom_county_label(color = "oldlace")
-#'
-#'  northcarolina_flat %>%
-#'  ggplot() +
-#'  aes(fips = FIPS, fill = SID74,
-#'      label = paste0(NAME, "\n", SID74)) +
-#'  geom_county() +
-#'  geom_county_label(lineheight = .7,
-#'  size = 2, check_overlap= TRUE,
-#'  color = "oldlace")
 geom_county_label <- function(
   mapping = NULL,
   data = NULL,
@@ -107,4 +76,3 @@ geom_county_label <- function(
     params = list(na.rm = na.rm, ...)
   )
 }
-

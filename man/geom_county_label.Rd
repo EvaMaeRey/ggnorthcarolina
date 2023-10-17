@@ -20,31 +20,3 @@ geom_county_label(
 \description{
 Title
 }
-\examples{
-library(ggplot2)
-northcarolina_flat \%>\%
- ggplot() +
- aes(fips = FIPS, label = NAME) +
- geom_county_label()
-
-northcarolina_flat \%>\%
- ggplot() +
- aes(fips = FIPS, label = NAME) +
- geom_county() +
- geom_county_label()
-
- northcarolina_flat \%>\%
- ggplot() +
- aes(fips = FIPS, label = SID74, fill = SID74) +
- geom_county() +
- geom_county_label(color = "oldlace")
-
- northcarolina_flat \%>\%
- ggplot() +
- aes(fips = FIPS, fill = SID74,
-     label = paste0(NAME, "\n", SID74)) +
- geom_county() +
- geom_county_label(lineheight = .7,
- size = 2, check_overlap= TRUE,
- color = "oldlace")
-}

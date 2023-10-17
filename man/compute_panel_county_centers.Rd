@@ -12,9 +12,3 @@ compute_panel_county_centers(data, scales, keep_county = NULL)
 \description{
 Title
 }
-\examples{
-northcarolina_flat |>
-  dplyr::rename(fips = FIPS) |>
-  dplyr::rename(label = NAME) |>
-  compute_panel_county_centers()
-}

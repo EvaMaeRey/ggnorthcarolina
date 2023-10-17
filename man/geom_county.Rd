@@ -21,10 +21,3 @@ geom_county(
 \description{
 Title
 }
-\examples{
-library(ggplot2)
-northcarolina_flat \%>\%
-ggplot() +
-aes(fips = FIPS) +
-geom_county()
-}

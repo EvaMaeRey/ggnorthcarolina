@@ -1,3 +1,5 @@
+################# Step 1. Compute panel function ###########
+
 #' Title
 #'
 #' @param data
@@ -39,6 +41,8 @@ compute_county_northcarolina_stamp <- function(data, scales, keep_county = NULL)
 
 }
 
+###### Step 2. Specify ggproto ###############
+
 
 StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcarolinastamp",
                                `_inherit` = ggplot2::Stat,
@@ -47,6 +51,8 @@ StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcaro
                                                             ggplot2::after_stat(geometry)))
 
 
+
+########### Step 3. 'stamp' function, inherits from sf ##################
 
 #' Title
 #'
@@ -62,9 +68,6 @@ StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcaro
 #' @export
 #'
 #' @examples
-#' library(ggplot2)
-#' ggplot() +
-#' stamp_county()
 stamp_county <- function(
                                  mapping = NULL,
                                  data = reference_full,
@@ -92,9 +95,5 @@ stamp_county <- function(
                                  )
 
 }
-
-
-
-
 
 

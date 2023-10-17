@@ -21,8 +21,3 @@ stamp_county(
 \description{
 Title
 }
-\examples{
-library(ggplot2)
-ggplot() +
-stamp_county()
-}
