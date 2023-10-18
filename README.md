@@ -17,9 +17,14 @@
   - [Write functions w/ ‘recipe’ substeps: 1. compute\_panel; 2. define
     ggproto; 3. write geom\_\*; 4.
     test.](#write-functions-w-recipe-substeps-1-compute_panel-2-define-ggproto-3-write-geom_-4-test)
-      - [Write `geom_county()`](#write-geom_county)
-      - [Write `stamp_county()`](#write-stamp_county)
-      - [Write `geom_county_labels()`](#write-geom_county_labels)
+      - [Write `geom_county()` (polygon)](#write-geom_county-polygon)
+      - [Write `geom_county_labels()` (polygon
+        center)](#write-geom_county_labels-polygon-center)
+      - [Write `stamp_roads()` (or roads)
+        **Placeholder**](#write-stamp_roads-or-roads-placeholder)
+          - [test it out](#test-it-out)
+      - [Write `stamp_county()` (render polygons w/o
+        data)](#write-stamp_county-render-polygons-wo-data)
   - [Part 2. Packaging and documentation 🚧
     ✅](#part-2-packaging-and-documentation--)
       - [minimal requirements for github package. Have
@@ -92,17 +97,11 @@ data, but not having experience with boundary files or just not wanting
 to think about joins to use a geom\_sf() layer.
 
 ``` r
-library(tidyverse)
+library(ggplot2) 
 library(ggnorthcarolina)
-```
 
-With ggnorthcarolina, voila, choropleth\!
-
-``` r
-library(ggnorthcarolina)
-library(ggplot2)
-northcarolina_flat %>%
-ggplot() +
+northcarolina_flat |>
+  ggplot() +
   aes(fips = FIPS) +
   geom_county() ->
 A
@@ -117,7 +116,7 @@ A + B
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-1-1.png" width="50%" />
+<img src="man/figures/README-example-1.png" width="50%" />
 
 And here is the input dataset, which is indeed just a tabular, flat
 dataset. It has no boundary information
@@ -150,20 +149,20 @@ Furthermore, we also make labeling these polygons easy:
 ``` r
 northcarolina_flat %>%
 ggplot() +
-aes(fips = FIPS, 
+  aes(fips = FIPS, 
     fill = SID74,
     label = paste0(NAME, "\n", SID74)) +
   geom_county() +
   geom_county_label(
     lineheight = .8,
     size = 2, 
-    check_overlap= TRUE,
+    check_overlap = TRUE,
     color = "oldlace")
 #> Joining with `by = join_by(fips)`
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-2-1.png" width="50%" />
 
 <!-- badges: start -->
 
@@ -199,7 +198,6 @@ file (which is the imagined )
 
 ``` r
 sf::st_read(system.file("shape/nc.shp", package="sf")) |>
-  data.frame() |>
   dplyr::select(FIPS, NAME, geometry) ->
 id_and_boundaries
 #> Reading layer `nc' from data source 
@@ -211,12 +209,14 @@ id_and_boundaries
 #> Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
 #> Geodetic CRS:  NAD27
 
-# ggnorthcarolina::nc_flat |>
-#   dplyr::left_join(id_and_boundaries, by = "FIPS") |>
-#   ggplot() + 
-#   geom_sf() + 
-#   aes(fill = SID74 / BIR74)
+ggnorthcarolina::nc_flat |>
+  dplyr::left_join(id_and_boundaries, by = "FIPS") |>
+  ggplot() +
+  geom_sf(aes(geometry = geometry)) + # why am I doing aes here. Surprisingly this didn't work
+  aes(fill = SID74 / BIR74)
 ```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="50%" />
 
 # Step 0. Prepare reference datasets.
 
@@ -239,42 +239,79 @@ remotes::install_github("EvaMaeRey/ggnc")
 ## code to prepare `DATASET` dataset goes here
 
 
-###### 0. Read in shape file data  #####
+###### 00. Read in boundaries shape file data  ########### 
 
 library(sf)
+#> Linking to GEOS 3.10.2, GDAL 3.4.2, PROJ 8.2.1; sf_use_s2() is TRUE
 northcarolina_county_sf <- st_read(system.file("shape/nc.shp", package="sf")) |>
   dplyr::rename(county_name = NAME,
                 fips = FIPS)
-
-### save as is if desired #####
-usethis::use_data(northcarolina_county_sf, overwrite = TRUE)
-
-
-#### 1, create polygon reference dataframe w xmin, ymin, xmax and ymax and save
-northcarolina_county_reference <- northcarolina_county_sf |>
-  ggnc::create_geometries_reference(
-                            id_cols = c(county_name, fips))
-
-usethis::use_data(northcarolina_county_reference, overwrite = TRUE)
+#> Reading layer `nc' from data source 
+#>   `/Library/Frameworks/R.framework/Versions/4.2/Resources/library/sf/shape/nc.shp' 
+#>   using driver `ESRI Shapefile'
+#> Simple feature collection with 100 features and 14 fields
+#> Geometry type: MULTIPOLYGON
+#> Dimension:     XY
+#> Bounding box:  xmin: -84.32385 ymin: 33.88199 xmax: -75.45698 ymax: 36.58965
+#> Geodetic CRS:  NAD27
 
 
-####### 2. create and save flat file for examples, if desired ####
+####### 0. create and save flat file for examples, if desired ####
 
 northcarolina_county_sf %>%
   sf::st_drop_geometry() ->
 northcarolina_county_flat
 
 usethis::use_data(northcarolina_county_flat, overwrite = TRUE)
+#> ✔ Setting active project to '/Users/evangelinereynolds/Google
+#> Drive/r_packages/ggnorthcarolina'
+#> ✔ Saving 'northcarolina_county_flat' to 'data/northcarolina_county_flat.rda'
+#> • Document your data (see 'https://r-pkgs.org/data.html')
 
-############### 3. create polygon centers and labels reference data frame
+
+#### 1, create boundaries reference dataframe w xmin, ymin, xmax and ymax and save
+northcarolina_county_reference <- northcarolina_county_sf |>
+  ggnc::create_geometries_reference(
+                            id_cols = c(county_name, fips))
+
+usethis::use_data(northcarolina_county_reference, overwrite = TRUE)
+#> ✔ Saving 'northcarolina_county_reference' to 'data/northcarolina_county_reference.rda'
+#> • Document your data (see 'https://r-pkgs.org/data.html')
+
+
+############### 2. create polygon centers and labels reference data frame
 
 # county centers for labeling polygons
 
 northcarolina_county_centers <- northcarolina_county_sf |>
   ggnc::prepare_polygon_labeling_data(id_cols = c(county_name, fips))
+#> Warning in st_point_on_surface.sfc(sf::st_zm(dplyr::pull(data_sf, geometry))):
+#> st_point_on_surface may not give correct results for longitude/latitude data
+#> Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+#> `.name_repair` is omitted as of tibble 2.0.0.
+#> ℹ Using compatibility `.name_repair`.
+#> ℹ The deprecated feature was likely used in the ggnc package.
+#>   Please report the issue to the authors.
+#> This warning is displayed once every 8 hours.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 
 
 usethis::use_data(northcarolina_county_centers, overwrite = TRUE)
+#> ✔ Saving 'northcarolina_county_centers' to 'data/northcarolina_county_centers.rda'
+#> • Document your data (see 'https://r-pkgs.org/data.html')
+
+
+####### 3.  create line data
+
+
+tigris::primary_secondary_roads("NC") -> nc_roads
+#> Retrieving data for the year 2021
+#>   |                                                                              |                                                                      |   0%  |                                                                              |                                                                      |   1%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |===                                                                   |   4%  |                                                                              |===                                                                   |   5%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |=====                                                                 |   8%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |=======                                                               |  11%  |                                                                              |========                                                              |  11%  |                                                                              |========                                                              |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |==========                                                            |  14%  |                                                                              |==========                                                            |  15%  |                                                                              |===========                                                           |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  17%  |                                                                              |============                                                          |  18%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  22%  |                                                                              |================                                                      |  23%  |                                                                              |================                                                      |  24%  |                                                                              |=================                                                     |  24%  |                                                                              |=================                                                     |  25%  |                                                                              |==================                                                    |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |===================                                                   |  28%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |=====================                                                 |  31%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |=======================                                               |  34%  |                                                                              |========================                                              |  34%  |                                                                              |========================                                              |  35%  |                                                                              |=========================                                             |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |==========================                                            |  38%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  39%  |                                                                              |============================                                          |  40%  |                                                                              |============================                                          |  41%  |                                                                              |=============================                                         |  41%  |                                                                              |=============================                                         |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |==============================                                        |  44%  |                                                                              |===============================                                       |  44%  |                                                                              |===============================                                       |  45%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |===================================                                   |  51%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |=====================================                                 |  54%  |                                                                              |======================================                                |  54%  |                                                                              |======================================                                |  55%  |                                                                              |=======================================                               |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  57%  |                                                                              |========================================                              |  58%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |==========================================                            |  61%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  62%  |                                                                              |============================================                          |  63%  |                                                                              |============================================                          |  64%  |                                                                              |=============================================                         |  64%  |                                                                              |=============================================                         |  65%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |===============================================                       |  68%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |=================================================                     |  71%  |                                                                              |==================================================                    |  71%  |                                                                              |==================================================                    |  72%  |                                                                              |===================================================                   |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |===================================================                   |  74%  |                                                                              |====================================================                  |  74%  |                                                                              |====================================================                  |  75%  |                                                                              |=====================================================                 |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  77%  |                                                                              |======================================================                |  78%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  80%  |                                                                              |========================================================              |  81%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |===========================================================           |  84%  |                                                                              |===========================================================           |  85%  |                                                                              |============================================================          |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |=============================================================         |  88%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |===============================================================       |  91%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |==================================================================    |  94%  |                                                                              |==================================================================    |  95%  |                                                                              |===================================================================   |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================|  99%  |                                                                              |======================================================================| 100%
+
+usethis::use_data(nc_roads, overwrite = TRUE)
+#> ✔ Saving 'nc_roads' to 'data/nc_roads.rda'
+#> • Document your data (see 'https://r-pkgs.org/data.html')
 ```
 
 Here are a few rows of each dataset that’s created
@@ -347,19 +384,78 @@ elsewhere.)
 "northcarolina_county_sf"
 #> [1] "northcarolina_county_sf"
 
+#' World Health Organization TB data
+#'
+#' A subset of data from the World Health Organization Global Tuberculosis
+#' Report ...
+#'
+#' @format ## `who`
+#' A data frame with 7,240 rows and 60 columns:
+#' \describe{
+#'   \item{country}{Country name}
+#'   \item{iso2, iso3}{2 & 3 letter ISO country codes}
+#'   \item{year}{Year}
+#'   ...
+#' }
+#' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
 "northcarolina_county_flat"
 #> [1] "northcarolina_county_flat"
 
+#' World Health Organization TB data
+#'
+#' A subset of data from the World Health Organization Global Tuberculosis
+#' Report ...
+#'
+#' @format ## `who`
+#' A data frame with 7,240 rows and 60 columns:
+#' \describe{
+#'   \item{country}{Country name}
+#'   \item{iso2, iso3}{2 & 3 letter ISO country codes}
+#'   \item{year}{Year}
+#'   ...
+#' }
+#' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
 "northcarolina_county_centers"
 #> [1] "northcarolina_county_centers"
 
+#' World Health Organization TB data
+#'
+#' A subset of data from the World Health Organization Global Tuberculosis
+#' Report ...
+#'
+#' @format ## `who`
+#' A data frame with 7,240 rows and 60 columns:
+#' \describe{
+#'   \item{country}{Country name}
+#'   \item{iso2, iso3}{2 & 3 letter ISO country codes}
+#'   \item{year}{Year}
+#'   ...
+#' }
+#' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
 "northcarolina_county_reference"
 #> [1] "northcarolina_county_reference"
+
+#' World Health Organization TB data
+#'
+#' A subset of data from the World Health Organization Global Tuberculosis
+#' Report ...
+#'
+#' @format ## `who`
+#' A data frame with 7,240 rows and 60 columns:
+#' \describe{
+#'   \item{country}{Country name}
+#'   \item{iso2, iso3}{2 & 3 letter ISO country codes}
+#'   \item{year}{Year}
+#'   ...
+#' }
+#' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
+"nc_roads"
+#> [1] "nc_roads"
 ```
 
 # Write functions w/ ‘recipe’ substeps: 1. compute\_panel; 2. define ggproto; 3. write geom\_\*; 4. test.
 
-## Write `geom_county()`
+## Write `geom_county()` (polygon)
 
 ``` r
 ################# Step 1. Compute panel function ###########
@@ -472,118 +568,9 @@ geom_county()
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="50%" />
 
-## Write `stamp_county()`
-
-``` r
-################# Step 1. Compute panel function ###########
-
-#' Title
-#'
-#' @param data
-#' @param scales
-#' @param county
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' library(dplyr)
-#' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head() |> str()
-#' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
-compute_county_northcarolina_stamp <- function(data, scales, keep_county = NULL){
-
-  reference_filtered <- northcarolina_county_reference
-  #
-  if(!is.null(keep_county)){
-
-    keep_county %>% tolower() -> keep_county
-
-    reference_filtered %>%
-      dplyr::filter(.data$county_name %>%
-                      tolower() %in%
-                      keep_county) ->
-      reference_filtered
-
-  }
-
-  reference_filtered %>%
-    dplyr::select("fips", "geometry", "xmin",
-                  "xmax", "ymin", "ymax") ->
-    reference_filtered
-
-
-  reference_filtered %>%
-    dplyr::mutate(group = -1) %>%
-    dplyr::select(-fips)
-
-}
-
-###### Step 2. Specify ggproto ###############
-
-
-StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcarolinastamp",
-                               `_inherit` = ggplot2::Stat,
-                               compute_panel = compute_county_northcarolina_stamp,
-                               default_aes = ggplot2::aes(geometry =
-                                                            ggplot2::after_stat(geometry)))
-
-
-
-########### Step 3. 'stamp' function, inherits from sf ##################
-
-#' Title
-#'
-#' @param mapping
-#' @param data
-#' @param position
-#' @param na.rm
-#' @param show.legend
-#' @param inherit.aes
-#' @param ...
-#'
-#' @return
-#' @export
-#'
-#' @examples
-stamp_county <- function(
-                                 mapping = NULL,
-                                 data = reference_full,
-                                 position = "identity",
-                                 na.rm = FALSE,
-                                 show.legend = NA,
-                                 inherit.aes = TRUE,
-                                 crs = "NAD27", #WGS84, NAD83
-                                 ...
-                                 ) {
-
-                                 c(ggplot2::layer_sf(
-                                   stat = StatCountynorthcarolinastamp,  # proto object from step 2
-                                   geom = ggplot2::GeomSf,  # inherit other behavior
-                                   data = data,
-                                   mapping = mapping,
-                                   position = position,
-                                   show.legend = show.legend,
-                                   inherit.aes = inherit.aes,
-                                   params = rlang::list2(na.rm = na.rm, ...)),
-                                   coord_sf(crs = crs,
-                                            # default_crs = sf::st_crs(crs),
-                                            # datum = sf::st_crs(crs),
-                                            default = TRUE)
-                                 )
-
-}
-```
-
-``` r
-ggplot() +
- stamp_county()
-```
-
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="50%" />
-
-## Write `geom_county_labels()`
+## Write `geom_county_labels()` (polygon center)
 
 ``` r
 
@@ -691,7 +678,7 @@ northcarolina_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="50%" />
 
 ``` r
 
@@ -704,7 +691,7 @@ northcarolina_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-2.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-2.png" width="50%" />
 
 ``` r
 
@@ -717,7 +704,7 @@ northcarolina_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-3.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-3.png" width="50%" />
 
 ``` r
 
@@ -733,7 +720,198 @@ northcarolina_flat %>%
 #> Joining with `by = join_by(fips)`
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-4.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-4.png" width="50%" />
+
+## Write `stamp_roads()` (or roads) **Placeholder**
+
+``` r
+#' Title
+#'
+#' @param data
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
+stamp_roads <- function(data = nc_roads, fill = NULL, fips = NULL, ...){
+  
+  geom_sf(data = data, aes(fill = fill, fips = fips), ...)
+  
+}
+
+
+
+# # have to combine... ugh...
+# tigris::area_water("NC", county = 'Alleghany')
+#   nc_water
+```
+
+### test it out
+
+``` r
+ggplot() + 
+  stamp_roads()
+#> Warning in layer_sf(geom = GeomSf, data = data, mapping = mapping, stat = stat,
+#> : Ignoring unknown aesthetics: fips
+```
+
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="50%" />
+
+## Write `stamp_county()` (render polygons w/o data)
+
+``` r
+# overthinking it below.
+stamp_county <- function(data = northcarolina_county_reference, fill = NULL, fips = NULL){
+  
+  geom_sf(data = data,
+          aes(geometry = geometry, fill = fill, fips = fips))
+  
+}
+
+# ################# Step 1. Compute panel function ###########
+# 
+# #' Title
+# #'
+# #' @param data
+# #' @param scales
+# #' @param county
+# #'
+# #' @return
+# #' @export
+# #'
+# #' @examples
+# #' library(dplyr)
+# #' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head() |> str()
+# #' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
+# compute_county_northcarolina_stamp <- function(data, scales, keep_county = NULL){
+# 
+#   reference_filtered <- northcarolina_county_reference
+#   #
+#   if(!is.null(keep_county)){
+# 
+#     keep_county %>% tolower() -> keep_county
+# 
+#     reference_filtered %>%
+#       dplyr::filter(.data$county_name %>%
+#                       tolower() %in%
+#                       keep_county) ->
+#       reference_filtered
+# 
+#   }
+# 
+#   reference_filtered %>%
+#     dplyr::select("fips", "geometry", "xmin",
+#                   "xmax", "ymin", "ymax") ->
+#     reference_filtered
+# 
+# 
+#   reference_filtered %>%
+#     dplyr::mutate(group = -1) %>%
+#     dplyr::select(-fips)
+# 
+# }
+# 
+# ###### Step 2. Specify ggproto ###############
+# 
+# 
+# StatCountynorthcarolinastamp <- ggplot2::ggproto(`_class` = "StatCountynorthcarolinastamp",
+#                                `_inherit` = ggplot2::Stat,
+#                                compute_panel = compute_county_northcarolina_stamp,
+#                                default_aes = ggplot2::aes(geometry =
+#                                                             ggplot2::after_stat(geometry)))
+# 
+# 
+# 
+# ########### Step 3. 'stamp' function, inherits from sf ##################
+# 
+# #' Title
+# #'
+# #' @param mapping
+# #' @param data
+# #' @param position
+# #' @param na.rm
+# #' @param show.legend
+# #' @param inherit.aes
+# #' @param ...
+# #'
+# #' @return
+# #' @export
+# #'
+# #' @examples
+# stamp_county <- function(
+#                                  mapping = NULL,
+#                                  data = reference_full,
+#                                  position = "identity",
+#                                  na.rm = FALSE,
+#                                  show.legend = NA,
+#                                  inherit.aes = TRUE,
+#                                  crs = "NAD27", #WGS84, NAD83
+#                                  ...
+#                                  ) {
+# 
+#                                  c(ggplot2::layer_sf(
+#                                    stat = StatCountynorthcarolinastamp,  # proto object from step 2
+#                                    geom = ggplot2::GeomSf,  # inherit other behavior
+#                                    data = data,
+#                                    mapping = mapping,
+#                                    position = position,
+#                                    show.legend = show.legend,
+#                                    inherit.aes = inherit.aes,
+#                                    params = rlang::list2(na.rm = na.rm, ...)),
+#                                    coord_sf(crs = crs,
+#                                             # default_crs = sf::st_crs(crs),
+#                                             # datum = sf::st_crs(crs),
+#                                             default = TRUE)
+#                                  )
+# 
+# }
+```
+
+``` r
+ggplot() +
+ stamp_county()
+#> Warning in layer_sf(geom = GeomSf, data = data, mapping = mapping, stat = stat,
+#> : Ignoring unknown aesthetics: fips
+```
+
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="50%" />
+
+``` r
+library(ggnorthcarolina)
+northcarolina_county_flat %>% 
+  dplyr::sample_n(10) %>% 
+  ggplot() +
+  stamp_county()
+#> Warning in layer_sf(geom = GeomSf, data = data, mapping = mapping, stat = stat,
+#> : Ignoring unknown aesthetics: fips
+
+last_plot() +
+  aes(fips = fips) +
+  geom_county(color = "black")
+#> Joining with `by = join_by(fips)`
+
+last_plot() +
+  aes(fill = SID79 / BIR79)
+#> Joining with `by = join_by(fips)`
+  
+last_plot() +
+  stamp_roads(alpha = .2)
+#> Warning in layer_sf(geom = GeomSf, data = data, mapping = mapping, stat = stat,
+#> : Ignoring unknown aesthetics: fips
+#> Joining with `by = join_by(fips)`
+  
+last_plot() +
+  geom_county_label()
+#> Joining with `by = join_by(fips)`
+#> Joining with `by = join_by(fips)`
+#> Warning: Computation failed in `stat_rownumber()`
+#> Caused by error in `dplyr::select()`:
+#> ! Can't subset columns that don't exist.
+#> ✖ Column `label` doesn't exist.
+```
+
+<img src="man/figures/README-unnamed-chunk-11-1.png" width="33%" /><img src="man/figures/README-unnamed-chunk-11-2.png" width="33%" /><img src="man/figures/README-unnamed-chunk-11-3.png" width="33%" /><img src="man/figures/README-unnamed-chunk-11-4.png" width="33%" /><img src="man/figures/README-unnamed-chunk-11-5.png" width="33%" />
 
 # Part 2. Packaging and documentation 🚧 ✅
 
@@ -750,6 +928,7 @@ chunk_to_r("data")
 chunk_to_r("geom_county")
 chunk_to_r("geom_county_labels")
 chunk_to_r("stamp_county")
+chunk_to_r("stamp_roads")
 ```
 
 ### Added roxygen skeleton? ✅
@@ -820,8 +999,8 @@ all[11:17]
 #> [3] "[1] stats     graphics  grDevices utils     datasets  methods   base     "
 #> [4] ""                                                                         
 #> [5] "other attached packages:"                                                 
-#> [6] " [1] readme2pkg_0.0.0.9000      patchwork_1.1.2           "               
-#> [7] " [3] ggnorthcarolina_0.0.0.9000 lubridate_1.9.2           "
+#> [6] "[1] readme2pkg_0.0.0.9000      sf_1.0-14                 "                
+#> [7] "[3] patchwork_1.1.2            ggnorthcarolina_0.0.0.9000"
 ```
 
 ## `devtools::check()` report
@@ -835,16 +1014,14 @@ devtools::check(pkg = ".")
 #> ──
 #> ✖ `compute_county_northcarolina` masks
 #>   `ggnorthcarolina::compute_county_northcarolina()`.
-#> ✖ `compute_county_northcarolina_stamp` masks
-#>   `ggnorthcarolina::compute_county_northcarolina_stamp()`.
 #> ✖ `compute_panel_county_centers` masks
 #>   `ggnorthcarolina::compute_panel_county_centers()`.
+#> ✖ `geom_county` masks `ggnorthcarolina::geom_county()`.
 #>   … and more.
 #> ℹ Did you accidentally source a file rather than using `load_all()`?
 #>   Run `rm(list = c("compute_county_northcarolina",
-#>   "compute_county_northcarolina_stamp", "compute_panel_county_centers",
-#>   "geom_county", "geom_county_label", "stamp_county"))` to remove the
-#>   conflicts.
+#>   "compute_panel_county_centers", "geom_county", "geom_county_label",
+#>   "stamp_roads"))` to remove the conflicts.
 #> Warning: [geom_county.R:5] @param requires name and description
 #> Warning: [geom_county.R:6] @param requires name and description
 #> Warning: [geom_county.R:9] @return requires a value
@@ -868,18 +1045,10 @@ devtools::check(pkg = ".")
 #> Warning: [geom_county_labels.R:54] @param requires name and description
 #> Warning: [geom_county_labels.R:57] @return requires a value
 #> Warning: [geom_county_labels.R:60] @examples requires a value
-#> Warning: [stamp_county.R:5] @param requires name and description
-#> Warning: [stamp_county.R:6] @param requires name and description
-#> Warning: [stamp_county.R:9] @return requires a value
-#> Warning: [stamp_county.R:59] @param requires name and description
-#> Warning: [stamp_county.R:60] @param requires name and description
-#> Warning: [stamp_county.R:61] @param requires name and description
-#> Warning: [stamp_county.R:62] @param requires name and description
-#> Warning: [stamp_county.R:63] @param requires name and description
-#> Warning: [stamp_county.R:64] @param requires name and description
-#> Warning: [stamp_county.R:67] @return requires a value
-#> Warning: [stamp_county.R:70] @examples requires a value
-#> Error: R CMD check found WARNINGs
+#> Warning: [stamp_roads.R:3] @param requires name and description
+#> Warning: [stamp_roads.R:6] @return requires a value
+#> Warning: [stamp_roads.R:9] @examples requires a value
+#> Error: 'northcarolina_county_sf' is not an exported object from 'namespace:ggnorthcarolina'
 ```
 
 # Install development package with `devtools::build()`
@@ -904,28 +1073,21 @@ fs::dir_tree(recurse = T)
 #> │   ├── geom_county.R
 #> │   ├── geom_county_labels.R
 #> │   ├── stamp_county.R
+#> │   ├── stamp_roads.R
 #> │   └── utils-pipe.R
 #> ├── README.Rmd
 #> ├── README.md
 #> ├── data
-#> │   ├── nc.rda
-#> │   ├── nc_county_centers.rda
-#> │   ├── nc_flat.rda
-#> │   ├── northcarolina.rda
+#> │   ├── nc_roads.rda
 #> │   ├── northcarolina_county_centers.rda
 #> │   ├── northcarolina_county_flat.rda
-#> │   ├── northcarolina_county_reference.rda
-#> │   ├── northcarolina_county_sf.rda
-#> │   ├── northcarolina_flat.rda
-#> │   ├── northcarolina_sf.rda
-#> │   └── reference_full.rda
+#> │   └── northcarolina_county_reference.rda
 #> ├── data-raw
 #> │   └── DATASET.R
 #> ├── data-rawDATASET.R
 #> ├── ggnorthcarolina.Rproj
 #> └── man
 #>     ├── compute_county_northcarolina.Rd
-#>     ├── compute_county_northcarolina_stamp.Rd
 #>     ├── compute_panel_county_centers.Rd
 #>     ├── figures
 #>     │   ├── README-cars-1.png
@@ -936,14 +1098,21 @@ fs::dir_tree(recurse = T)
 #>     │   ├── README-example-2.png
 #>     │   ├── README-example-3.png
 #>     │   ├── README-pressure-1.png
+#>     │   ├── README-stamp_county-1.png
 #>     │   ├── README-unnamed-chunk-1-1.png
 #>     │   ├── README-unnamed-chunk-10-1.png
 #>     │   ├── README-unnamed-chunk-10-2.png
 #>     │   ├── README-unnamed-chunk-10-3.png
 #>     │   ├── README-unnamed-chunk-10-4.png
+#>     │   ├── README-unnamed-chunk-11-1.png
+#>     │   ├── README-unnamed-chunk-11-2.png
+#>     │   ├── README-unnamed-chunk-11-3.png
+#>     │   ├── README-unnamed-chunk-11-4.png
+#>     │   ├── README-unnamed-chunk-11-5.png
 #>     │   ├── README-unnamed-chunk-2-1.png
 #>     │   ├── README-unnamed-chunk-3-1.png
 #>     │   ├── README-unnamed-chunk-4-1.png
+#>     │   ├── README-unnamed-chunk-6-1.png
 #>     │   ├── README-unnamed-chunk-7-1.png
 #>     │   ├── README-unnamed-chunk-7-2.png
 #>     │   ├── README-unnamed-chunk-7-3.png
@@ -951,12 +1120,20 @@ fs::dir_tree(recurse = T)
 #>     │   ├── README-unnamed-chunk-8-1.png
 #>     │   ├── README-unnamed-chunk-8-2.png
 #>     │   ├── README-unnamed-chunk-8-3.png
-#>     │   └── README-unnamed-chunk-8-4.png
+#>     │   ├── README-unnamed-chunk-8-4.png
+#>     │   ├── README-unnamed-chunk-9-1.png
+#>     │   ├── README-unnamed-chunk-9-2.png
+#>     │   ├── README-unnamed-chunk-9-3.png
+#>     │   └── README-unnamed-chunk-9-4.png
 #>     ├── geom_county.Rd
 #>     ├── geom_county_label.Rd
+#>     ├── nc_roads.Rd
+#>     ├── northcarolina_county_centers.Rd
+#>     ├── northcarolina_county_flat.Rd
+#>     ├── northcarolina_county_reference.Rd
 #>     ├── northcarolina_county_sf.Rd
 #>     ├── pipe.Rd
-#>     └── stamp_county.Rd
+#>     └── stamp_roads.Rd
 ```
 
 # 

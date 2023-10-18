@@ -2,9 +2,8 @@
 
 export("%>%")
 export(compute_county_northcarolina)
-export(compute_county_northcarolina_stamp)
 export(compute_panel_county_centers)
 export(geom_county)
 export(geom_county_label)
-export(stamp_county)
+export(stamp_roads)
 importFrom(magrittr,"%>%")
