@@ -55,8 +55,9 @@ last_plot() +
   aes(fill = BIR74) ->
 B
 
-library(patchwork)
-A + B
+# library(patchwork)
+A
+B
 ```
 
 
@@ -79,6 +80,9 @@ ggplot() +
     fill = SID74,
     label = paste0(NAME, "\n", SID74)) +
   geom_county() +
+  geom_county_label()
+
+ggwipe::last_plot_wipe_last() + 
   geom_county_label(
     lineheight = .8,
     size = 2, 
@@ -117,7 +121,7 @@ ggnorthcarolina::nc_flat |>
   dplyr::left_join(id_and_boundaries, by = "FIPS") |>
   ggplot() +
   geom_sf(aes(geometry = geometry)) + # why am I doing aes here. Surprisingly this didn't work
-  aes(fill = SID74 / BIR74)
+  aes(fill = 1000* SID74 / BIR74)
 ```
 
 
@@ -284,7 +288,7 @@ But `northcarolina_county_sf` has template text to show you how to document this
 ```
 
 
-# Write functions w/ 'recipe' substeps: 1. compute_panel; 2. define ggproto; 3. write geom_*; 4. test.
+# Write functions w/ 'recipe' substeps: 1. write compute function; 2. define ggproto; 3. write geom_*; 4. test.
 
 ## Write `geom_county()` (polygon)
 
@@ -397,6 +401,12 @@ northcarolina_flat %>%
 ggplot() +
 aes(fips = FIPS) +
 geom_county()
+
+last_plot()-> p
+
+p$coordinates$crs <- 4326
+
+p
 ```
 
 
