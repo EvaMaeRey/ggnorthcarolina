@@ -6,6 +6,13 @@ output:
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+If you would like to use ggnorthcarolina as a template, 
+
+1. click "Use this template" -> "create a new repository"
+2. change name of package in the description folder
+3. change .rproj file name to *your* package name
+
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -14,22 +21,24 @@ knitr::opts_chunk$set(
   out.width = "50%"
 )
 options(tidyverse.quiet = TRUE)
+```
 
-package_exists <- F  # turn this on after you've built functionality and package
-print_reports <- F
-build_package <- T
-exit_before_packaging_steps <- T
+# Part 0. preliminaries
 
+Depending on where you are in your build journey, we'll 
+
+```{r}
+package_exists <- F  # while package is aspirational, FALSE
+exit_before_packaging_steps <- T  # when very exploratory, TRUE
+build_package <- T # when finally ready to build package, TRUE
+print_reports <- F # 
 print_reports_action <- ifelse(print_reports, "asis", "hide")
 ```
 
-# Part I: {ggnorthcarolina} 
-
-traditional readme, but at first aspirational)
+# Part I: {ggnorthcarolina} traditional readme/aspirations
 
 ggnorthcarolina allows you to create informative county maps straight from a flat tabular data file.  i.e. a file that has the county id in column as well as characteristics about the counties to be represented by fill color for example.
 
-If you would like to use ggnorthcarolina as a template, click "Use this template" ->
 
 ## Installation
 
