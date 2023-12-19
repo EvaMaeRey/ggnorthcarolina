@@ -15,17 +15,21 @@ knitr::opts_chunk$set(
 )
 options(tidyverse.quiet = TRUE)
 
-package_exists <- T
+package_exists <- F  # turn this on after you've built functionality and package
 print_reports <- F
 build_package <- T
-build_package_w_readme <- T
+exit_before_packaging_steps <- T
 
 print_reports_action <- ifelse(print_reports, "asis", "hide")
 ```
 
-# {ggnorthcarolina}
+# Part I: {ggnorthcarolina} 
+
+traditional readme, but at first aspirational)
 
 ggnorthcarolina allows you to create informative county maps straight from a flat tabular data file.  i.e. a file that has the county id in column as well as characteristics about the counties to be represented by fill color for example.
+
+If you would like to use ggnorthcarolina as a template, click "Use this template" ->
 
 ## Installation
 
@@ -41,30 +45,27 @@ devtools::install_github("EvaMaeRey/ggnorthcarolina")
 North Carolina county characteristics data, and wanting to map that data, but not having experience with boundary files or just not wanting to think about joins to use a geom_sf() layer.
 
 
-```{r example}
+```{r example, eval = package_exists}
 library(ggplot2) 
 library(ggnorthcarolina)
 
-northcarolina_flat |>
+northcarolina_county_flat |>
   ggplot() +
-  aes(fips = FIPS) +
-  geom_county() ->
-A
+  aes(fips = fips) +
+  geom_county()
 
 last_plot() + 
-  aes(fill = BIR74) ->
-B
+  aes(fill = BIR74)
 
-# library(patchwork)
-A
-B
+#library(patchwork)
+# A + B
 ```
 
 
 And here is the input dataset, which is indeed just a tabular, flat dataset. It has no boundary information
 
-```{r}
-northcarolina_flat %>% head()
+```{r, eval = package_exists}
+northcarolina_county_flat %>% head()
 ```
 
 By declaring the aesthetic fips, the geom_ function joins the flat file to boundary data and an SF layer is plotted. 
@@ -73,12 +74,12 @@ By declaring the aesthetic fips, the geom_ function joins the flat file to bound
 
 Furthermore, we also make labeling these polygons easy:
 
-```{r}
-northcarolina_flat %>%
+```{r, eval = package_exists}
+northcarolina_county_flat %>%
 ggplot() +
-  aes(fips = FIPS, 
+  aes(fips = fips, 
     fill = SID74,
-    label = paste0(NAME, "\n", SID74)) +
+    label = paste0(county_name, "\n", SID74)) +
   geom_county() +
   geom_county_label()
 
@@ -93,7 +94,7 @@ ggwipe::last_plot_wipe_last() +
 <!-- badges: start -->
 <!-- badges: end -->
 
-# How we built this functionality
+# Part II:  Building functionality
 
 The second-order goal of ggnorthcarolina is to serve as a model and template for other ggplot-based geography-specific convenience mapping packages. Because of this, and because the package is generally new and could use other sets of eyes on pretty much every decision, I'm using a literate programming paradigm to write a narrative for this package.
 
@@ -113,15 +114,16 @@ This doesn't show all the pain that you will actually be in if you want to creat
 
 
 ```{r}
+library(tidyverse)
 sf::st_read(system.file("shape/nc.shp", package="sf")) |>
   dplyr::select(FIPS, NAME, geometry) ->
 id_and_boundaries
 
-ggnorthcarolina::nc_flat |>
-  dplyr::left_join(id_and_boundaries, by = "FIPS") |>
-  ggplot() +
-  geom_sf(aes(geometry = geometry)) + # why am I doing aes here. Surprisingly this didn't work
-  aes(fill = 1000* SID74 / BIR74)
+ggnc::nc_flat |>
+   dplyr::left_join(id_and_boundaries, by = "FIPS") |>
+   ggplot() +
+   geom_sf(aes(geometry = geometry)) + # why am I doing aes here. Surprisingly this didn't work
+   aes(fill = 1000* SID74 / BIR74)
 ```
 
 
@@ -160,11 +162,11 @@ usethis::use_data(northcarolina_county_flat, overwrite = TRUE)
 
 
 #### 1, create boundaries reference dataframe w xmin, ymin, xmax and ymax and save
-northcarolina_county_reference <- northcarolina_county_sf |>
+northcarolina_county_geo_reference <- northcarolina_county_sf |>
   ggnc::create_geometries_reference(
                             id_cols = c(county_name, fips))
 
-usethis::use_data(northcarolina_county_reference, overwrite = TRUE)
+usethis::use_data(northcarolina_county_geo_reference, overwrite = TRUE)
 
 
 ############### 2. create polygon centers and labels reference data frame
@@ -181,9 +183,9 @@ usethis::use_data(northcarolina_county_centers, overwrite = TRUE)
 ####### 3.  create line data
 
 
-tigris::primary_secondary_roads("NC") -> nc_roads
+tigris::primary_secondary_roads("NC") -> northcarolina_roads
 
-usethis::use_data(nc_roads, overwrite = TRUE)
+usethis::use_data(northcarolina_roads, overwrite = TRUE)
 
 
 
@@ -193,9 +195,9 @@ usethis::use_data(nc_roads, overwrite = TRUE)
 Here are a few rows of each dataset that's created
 
 ```{r}
-nc_flat %>% head()
-northcarolina_county_reference %>% head()
-nc_county_centers %>% head()
+northcarolina_county_flat %>% head()
+northcarolina_county_geo_reference %>% head()
+northcarolina_county_centers %>% head()
 ```
 
 
@@ -268,7 +270,7 @@ But `northcarolina_county_sf` has template text to show you how to document this
 #'   ...
 #' }
 #' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
-"northcarolina_county_reference"
+"northcarolina_county_geo_reference"
 
 #' World Health Organization TB data
 #'
@@ -284,7 +286,7 @@ But `northcarolina_county_sf` has template text to show you how to document this
 #'   ...
 #' }
 #' @source <https://www.who.int/teams/global-tuberculosis-programme/data>
-"nc_roads"
+"northcarolina_roads"
 ```
 
 
@@ -306,11 +308,11 @@ But `northcarolina_county_sf` has template text to show you how to document this
 #'
 #' @examples
 #' library(dplyr)
-#' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head()
-#' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
-compute_county_northcarolina <- function(data, scales, keep_county = NULL){
+#' #northcarolina_county_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head()
+#' #northcarolina_county_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
+compute_county_northcarolina <- function(data, scales, keep_county = NULL, drop_county = NULL){
 
-  reference_filtered <- northcarolina_county_reference
+  reference_filtered <- northcarolina_county_geo_reference
   #
   if(!is.null(keep_county)){
 
@@ -320,6 +322,19 @@ compute_county_northcarolina <- function(data, scales, keep_county = NULL){
       dplyr::filter(.data$county_name %>%
                       tolower() %in%
                       keep_county) ->
+      reference_filtered
+
+  }
+  
+  
+    if(!is.null(drop_county)){
+
+    drop_county %>% tolower() -> drop_county
+
+    reference_filtered %>%
+      dplyr::filter(!(.data$county_name %>%
+                      tolower() %in%
+                      drop_county)) ->
       reference_filtered
 
   }
@@ -395,11 +410,11 @@ geom_county <- function(
 ```
 
 
-```{r}
+```{r, eval = F }
 library(ggplot2)
-northcarolina_flat %>%
+northcarolina_county_flat %>%
 ggplot() +
-aes(fips = FIPS) +
+aes(fips = fips) +
 geom_county()
 
 last_plot()-> p
@@ -435,26 +450,26 @@ compute_panel_county_centers <- function(data,
                                          scales,
                                          keep_county = NULL){
 
-  northcarolina_county_centers_filtered <- northcarolina_county_centers
+  centers_filtered <- northcarolina_county_centers
 
   if(!is.null(keep_county)){
     keep_county %>% tolower() -> keep_county
 
-    northcarolina_county_centers_filtered %>%
+    centers_filtered %>%
       dplyr::filter(.data$county_name %>%
                       tolower() %in%
                       keep_county) ->
-      northcarolina_county_centers_filtered}
+      centers_filtered}
 
   data %>%
-    dplyr::inner_join(northcarolina_county_centers_filtered) %>%
+    dplyr::inner_join(centers_filtered) %>%
     dplyr::select(x, y, label)
 
 }
 
 ###### Step 2. Specify ggproto ###############
 StatCountycenters <- ggplot2::ggproto(
-  `_class` = "StatRownumber",
+  `_class` = "StatCountycenters",
   `_inherit` = ggplot2::Stat,
   # required_aes = c("label"), # for some reason this breaks things... why?
   compute_panel = compute_panel_county_centers
@@ -497,10 +512,10 @@ geom_county_label <- function(
 }
 ```
 
-```{r}
-northcarolina_flat |>
-  dplyr::rename(fips = FIPS) |>
-  dplyr::rename(label = NAME) |>
+```{r, eval = F}
+northcarolina_county_flat |>
+  dplyr::rename(fips = fips) |>
+  dplyr::rename(label = county_name) |>
   compute_panel_county_centers() |> 
   head()
 ```
@@ -508,27 +523,27 @@ northcarolina_flat |>
 
 ```{r}
 library(ggplot2)
-northcarolina_flat %>%
+northcarolina_county_flat %>%
  ggplot() +
- aes(fips = FIPS, label = NAME) +
+ aes(fips = fips, label = county_name) +
  geom_county_label()
 
-northcarolina_flat %>%
+northcarolina_county_flat %>%
  ggplot() +
- aes(fips = FIPS, label = NAME) +
+ aes(fips = fips, label = county_name) +
  geom_county() +
  geom_county_label()
 
- northcarolina_flat %>%
+northcarolina_county_flat %>%
  ggplot() +
- aes(fips = FIPS, label = SID74, fill = SID74) +
+ aes(fips = fips, label = SID74, fill = SID74) +
  geom_county() +
  geom_county_label(color = "oldlace")
 
- northcarolina_flat %>%
+northcarolina_county_flat %>%
  ggplot() +
- aes(fips = FIPS, fill = SID74,
-     label = paste0(NAME, "\n", SID74)) +
+ aes(fips = fips, fill = SID74,
+     label = paste0(county_name, "\n", SID74)) +
  geom_county() +
  geom_county_label(lineheight = .7,
  size = 2, check_overlap= TRUE,
@@ -549,7 +564,7 @@ northcarolina_flat %>%
 #' @export
 #'
 #' @examples
-stamp_roads <- function(data = nc_roads, fill = NULL, fips = NULL, ...){
+stamp_roads <- function(data = northcarolina_roads, fill = NULL, fips = NULL, ...){
   
   geom_sf(data = data, aes(fill = fill, fips = fips), ...)
   
@@ -574,7 +589,33 @@ ggplot() +
 
 ```{r stamp_county}
 # overthinking it below.
-stamp_county <- function(data = northcarolina_county_reference, fill = NULL, fips = NULL){
+stamp_county <- function(data = northcarolina_county_geo_reference, fill = NULL, fips = NULL, keep_county = NULL, drop_county = NULL){
+  
+  if(!is.null(keep_county)){
+
+    keep_county %>% tolower() -> keep_county
+
+    data %>%
+      dplyr::filter(.data$county_name %>%
+                      tolower() %in%
+                      keep_county) ->
+      data
+
+  }
+  
+  
+    if(!is.null(drop_county)){
+
+    drop_county %>% tolower() -> drop_county
+
+    data %>%
+      dplyr::filter(!(.data$county_name %>%
+                      tolower() %in%
+                      drop_county)) ->
+      data
+
+  }
+  
   
   geom_sf(data = data,
           aes(geometry = geometry, fill = fill, fips = fips))
@@ -594,11 +635,11 @@ stamp_county <- function(data = northcarolina_county_reference, fill = NULL, fip
 # #'
 # #' @examples
 # #' library(dplyr)
-# #' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head() |> str()
-# #' #northcarolina_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
+# #' #northcarolina_county_flat |> rename(fips = FIPS) |> compute_county_northcarolina() |> head() |> str()
+# #' #northcarolina_county_flat |> rename(fips = FIPS) |> compute_county_northcarolina(keep_county = "Ashe")
 # compute_county_northcarolina_stamp <- function(data, scales, keep_county = NULL){
 # 
-#   reference_filtered <- northcarolina_county_reference
+#   reference_filtered <- northcarolina_county_geo_reference
 #   #
 #   if(!is.null(keep_county)){
 # 
@@ -689,11 +730,13 @@ stamp_county <- function(data = northcarolina_county_reference, fill = NULL, fip
 ```{r}
 ggplot() +
  stamp_county()
+
+ggplot() +
+ stamp_county(keep_county = "Alleghany")
 ```
 
 
 ```{r, out.width="33%", fig.show="hold"}
-library(ggnorthcarolina)
 northcarolina_county_flat %>% 
   dplyr::sample_n(10) %>% 
   ggplot() +
@@ -715,7 +758,7 @@ last_plot() +
 
 
 ```{r, echo = F}
-if(!build_package_w_readme){knitr::knit_exit()}
+if(exit_before_packaging_steps){knitr::knit_exit()}
 ```
 
 # Part 2. Packaging and documentation  🚧 ✅ 
@@ -745,7 +788,7 @@ chunk_to_r("stamp_roads")
 
 ### Managed dependencies ? ✅ 
 
-package dependancies managed, i.e. `depend::function()` in proposed functions and declared in the DESCRIPTION
+package dependencies managed, i.e. `depend::function()` in proposed functions and declared in the DESCRIPTION
 
 ### Chosen a license? ✅ 
 
