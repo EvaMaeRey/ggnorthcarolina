@@ -159,7 +159,8 @@ remotes::install_github("EvaMaeRey/ggnc")
 ###### 00. Read in boundaries shape file data  ########### 
 
 library(sf)
-northcarolina_county_sf <- st_read(system.file("shape/nc.shp", package="sf")) |>
+northcarolina_county_sf <- st_read(system.file("shape/nc.shp",
+                                               package="sf")) |>
   dplyr::rename(county_name = NAME,
                 fips = FIPS)
 
@@ -174,9 +175,26 @@ usethis::use_data(northcarolina_county_flat, overwrite = TRUE)
 
 
 #### 1, create boundaries reference dataframe w xmin, ymin, xmax and ymax and save
+return_st_bbox_df <- function(sf_df){
+
+  data.frame(xmin = sf::st_bbox(sf_df)[1],
+             xmax = sf::st_bbox(sf_df)[2],
+             ymin = sf::st_bbox(sf_df)[3],
+             ymax = sf::st_bbox(sf_df)[4])
+
+}
+
+
 northcarolina_county_geo_reference <- northcarolina_county_sf |>
-  ggnc::create_geometries_reference(
-                            id_cols = c(county_name, fips))
+  dplyr::select(county_name, fips, geometry) |>
+  dplyr::mutate(bb =
+                  purrr::map(geometry, return_st_bbox_df)) |>
+  tidyr::unnest(bb)
+
+
+# northcarolina_county_geo_reference <- northcarolina_county_sf |>
+#   ggnc::create_geometries_reference(
+#                             id_cols = c(county_name, fips))
 
 usethis::use_data(northcarolina_county_geo_reference, overwrite = TRUE)
 
@@ -184,9 +202,28 @@ usethis::use_data(northcarolina_county_geo_reference, overwrite = TRUE)
 ############### 2. create polygon centers and labels reference data frame
 
 # county centers for labeling polygons
+prepare_polygon_labeling_data <- function(data_sf = nc, id_cols){
 
-northcarolina_county_centers <- northcarolina_county_sf |>
-  ggnc::prepare_polygon_labeling_data(id_cols = c(county_name, fips))
+  data_sf |>
+    dplyr::pull(geometry) |>
+    sf::st_zm() |>
+    sf::st_point_on_surface() ->
+  points_sf
+
+#https://github.com/r-spatial/sf/issues/231
+do.call(rbind, sf::st_geometry(points_sf)) %>%
+  tibble::as_tibble() %>% setNames(c("x","y")) ->
+the_coords
+
+cbind(the_coords, data_sf) %>%
+  dplyr::select(x, y, {{id_cols}})
+
+}
+
+
+northcarolina_county_centers <- 
+  northcarolina_county_sf |>
+  prepare_polygon_labeling_data(id_cols = c(county_name, fips))
 
 
 usethis::use_data(northcarolina_county_centers, overwrite = TRUE)
